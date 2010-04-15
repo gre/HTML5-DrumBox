@@ -9,7 +9,7 @@
   <body>
     <div id="errors">
       <noscript><div class="error">Please enable javascript.</div></noscript>
-      <script>
+      <script type="text/javascript">
       $(function(){
         if(!document.createElement('audio').canPlayType) {
           $('#errors').append('<div class="error">Your browser doesn\'t support HTML5 &lt;audio&gt; tag.</div>');
@@ -29,8 +29,8 @@
       <ul>
         <li>Each alphabetic key made a sound : a kick, a snare, a clap, a voice,...</li>
         <li>A real time visualizer displays you a sound representation.</li>
-        <li>A map helps you to repeat drums in a loop.</li>
-        <li>You can also configure BPM and cut number of this map.</li>
+        <li>A drumbox helps you to repeat drums in a loop.</li>
+        <li>You can also configure BPM and cut number of this dumbox.</li>
       </ul>
       </p>
       <h1>How to use ?</h1>
@@ -42,8 +42,8 @@
       
       <canvas id="visualizer" width="800" height="400"></canvas>
       
-      <div><!-- loop map -->
-        <div>
+      <div id="drumbox">
+        <div class="options">
           <label for="cutNumber">Number of cut in one loop</label>
           <select id="cutNumber">
             <option value="8">8</option>
@@ -51,7 +51,15 @@
             <option value="16" selected="selected">16</option>
           </select>
           <label for="BpmCutLoop">BPM of a cut loop</label>
+          <select id="BpmCutLoop"></select>
+          <script type="text/javascript">
+            $(function(){
+              for(var i=80; i<=120; i+=10)
+                $('#BpmCutLoop').append('<option value="'+i+'">'+i+'</option>');
+            }());
+          </script>
         </div>
+        
       </div>
       
     </div>

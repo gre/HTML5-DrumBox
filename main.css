@@ -7,6 +7,8 @@ body {
   font-size: 14px;
   color: white;
   font-family: Georgia, Serif;
+  margin: 0;
+  padding: 0;
 }
 
 a {
@@ -19,12 +21,36 @@ a:hover {
 
 header {
   display: block;
+  padding: 5px;
 }
 
 footer {
   display: block;
+  padding: 5px;
+}
+
+#wrapper {
+  padding: 5px;
 }
 
 .error {
   color: red;
+}
+
+#drumbox .options {
+  overflow: auto;
+  padding: 5px;
+  background: rgba(255,255,255,0.2);
+}
+#drumbox .options label, #drumbox .options select {
+  float: left;
+  line-height: 2em;
+}
+#drumbox .options label {
+  clear: both;
+  font-weight: bold;
+  width: 250px;
+}
+#drumbox .options label:after {
+  content: ': ';
 }
