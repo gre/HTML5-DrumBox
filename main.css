@@ -37,6 +37,25 @@ footer {
   color: red;
 }
 
+#drumbox {
+  
+}
+
+#drumbox table.tracks {
+  margin: 0 auto;
+  padding: 2px;
+  background: rgba(255,255,255,0.2);
+  -moz-border-radius: 10px 10px 0 0;
+}
+#drumbox .track td.soundLabel {
+  width: 100px;
+  font-family: Monospace;
+  font-size: 12px;
+}
+#drumbox .track td {
+  width: 20px;
+}
+
 #drumbox .options {
   overflow: auto;
   padding: 5px;
@@ -49,8 +68,11 @@ footer {
 #drumbox .options label {
   clear: both;
   font-weight: bold;
-  width: 250px;
+  width: 80%;
 }
 #drumbox .options label:after {
   content: ': ';
+}
+#drumbox .options select {
+  min-width: 20%;;
 }

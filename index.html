@@ -40,9 +40,34 @@
     </div>
     <div id="main" style="display: none;">
       
-      <canvas id="visualizer" width="800" height="400"></canvas>
+      <canvas id="visualizer" width="600" height="200"></canvas>
       
       <div id="drumbox">
+      
+        <table class="tracks">
+          <tr class="track vocal">
+            <td class="soundLabel">Exemple vocal</td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+          </tr>
+          <tr class="track kick">
+            <td class="soundLabel">Exemple kick</td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+            <td><input type="checkbox" /></td><td><input type="checkbox" /></td>
+          </tr>
+        </table>
         <div class="options">
           <label for="cutNumber">Number of cut in one loop</label>
           <select id="cutNumber">
@@ -59,7 +84,6 @@
             }());
           </script>
         </div>
-        
       </div>
       
     </div>
