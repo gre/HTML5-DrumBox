@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>An Experimental DrumBox</title>
+    <link rel="stylesheet" type="text/css" href="main.css" />
+    <script type="text/javascript" src="javascripts/jquery-1.4.2.min.js"></script>
+    <script type="text/javascript" src="javascripts/main.js"></script>
+  </head>
+  <body>
+    <div id="errors">
+      <noscript><div class="error">Please enable javascript.</div></noscript>
+      <script>
+      $(function(){
+        if(!document.createElement('audio').canPlayType) {
+          $('#errors').append('<div class="error">Your browser doesn\'t support HTML5 &lt;audio&gt; tag.</div>');
+        }
+      }());
+      </script>
+    </div>
+    <div id="preLoader" style="display: none;"></div>
+    
+    <div id="wrapper">
+    <header>Welcome to an experimental drumbox made with <strong>HTML5</strong> using <em>audio</em> and <em>canvas</em> tags.</header>
+    <div class="intro">
+      <a href="javascript:;" class="letsMix">Let's mix</a>
+      <audio class="letsMix" src="sounds/vocal/go.wav"></audio>
+      <h1>The concept</h1>
+      <p>
+      <ul>
+        <li>Each alphabetic key made a sound : a kick, a snare, a clap, a voice,...</li>
+        <li>A real time visualizer displays you a sound representation.</li>
+        <li>A map helps you to repeat drums in a loop.</li>
+        <li>You can also configure BPM and cut number of this map.</li>
+      </ul>
+      </p>
+      <h1>How to use ?</h1>
+      <p>
+        <img alt="[keymap image]" src="images/keymap.png" />
+      </p>
+    </div>
+    <div id="main" style="display: none;">
+      
+      <canvas id="visualizer" width="800" height="400"></canvas>
+      
+      <div><!-- loop map -->
+        <div>
+          <label for="cutNumber">Number of cut in one loop</label>
+          <select id="cutNumber">
+            <option value="8">8</option>
+            <option value="12">12</option>
+            <option value="16" selected="selected">16</option>
+          </select>
+          <label for="BpmCutLoop">BPM of a cut loop</label>
+        </div>
+      </div>
+      
+    </div>
+    <footer><a href="http://grenlibre.fr/">grenlibre.fr</a> - <a href="#">An experimental HTML5 drumbox</a></footer>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,30 @@
+
+html {
+  background: black;
+}
+
+body {
+  font-size: 14px;
+  color: white;
+  font-family: Georgia, Serif;
+}
+
+a {
+  color: #BFF;
+  text-decoration: none;
+}
+a:hover {
+  color: #DFF;
+}
+
+header {
+  display: block;
+}
+
+footer {
+  display: block;
+}
+
+.error {
+  color: red;
+}
