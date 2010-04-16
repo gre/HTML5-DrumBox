@@ -12,20 +12,26 @@
     var tpl_check = function(checked) {
       return '<td class="check"><input type="checkbox"'+(!checked?'':'checked="checked"')+'/></td>';
     };
+    var tpl_switcher = function(sound) {
+      return '<td class="switcher">'+
+      '<button class="setTrackLetter">'+(sound?'Change':'Define')+'</button>'+
+      '</td>';
+    };
     var tpl_soundLabel = function(sound) {
+      if(!sound) return '<td class="soundLabel"></td>';
       return '<td class="soundLabel">'+
-      (sound?
-      ('<audio src="'+sound.uri+'"></audio>'+
-      '<span>'+sound.name+'</span>'):
-      ('<button class="setTrackLetter">Definir le son</button>'))+
+      '<audio src="'+sound.uri+'"></audio>'+
+      '<span>'+sound.name+'</span>'+
       '</td>';
     };
     
-    var tpl_track = function(sound) {
+    var tpl_track = function(letter) {
+      var sound = g_sounds[letter];
       var html = "";
       for(var i=0; i<g_trackLoopCut; ++i)
         html += tpl_check();
-      return '<tr class="track">'+
+      return '<tr class="track" rel="'+(letter||"")+'">'+
+      tpl_switcher(sound)+
       tpl_soundLabel(sound)+
       html+
       '</tr>';
@@ -33,12 +39,12 @@
     
     var addTrack = function(letter) {
       var sound = letter ? g_sounds[letter] : null;
-      var tpl = tpl_track(sound);
+      var tpl = tpl_track(letter);
       $('#drumbox .tracks').append(tpl);
     };
     
     var setTrackLetter = function(track, letter) {
-      $(track).replaceWith(tpl_track(g_sounds[letter]));
+      $(track).replaceWith(tpl_track(letter));
     };
     
     var updateTrackLoopCut = function() {
@@ -82,7 +88,11 @@
         });
         
         $('#drumbox .track .setTrackLetter').live('click', function() {
-          //setTrackLetter($(this).parents().filter('.track'), num);
+          var track = $(this).parents().filter('.track');
+          $(this).removeClass('setTrackLetter').html("press&nbsp;key...");
+          $(document).one('touchsound', function(e,data){
+            setTrackLetter(track, data);
+          });
         });
         
       }
@@ -148,6 +158,8 @@
           var player = sound.node[0];
           player.pause();
           player.currentTime=0;
+          $(document).trigger('touchsound',e.keyCode);
+          $(document).trigger('sound',e.keyCode);
           sound.node[0].play();
           Visualizer.sound(e.keyCode);
         }
@@ -161,6 +173,7 @@
         // qsdfghjklm : [81, 83, 68, 70, 71, 72, 74, 75, 76, 77]
         // wxcvbn : [87, 88, 67, 86, 66, 78]
         
+        // refactor that : g_sounds will be init by a simple affectation. only others things are made here, like node...
         addAllSounds({
           65: ["sounds/kick/Kick11.wav", 'kick'],
           90: ["sounds/kick/Kick46.wav", 'kick'],
@@ -312,37 +325,55 @@
   };
   
   var Config = CONFIG = function() {
-    /* FORMAT : separate by \n and :
-      <nb of cut>
-      <bpm>
-      # for each line :
-      <letter num>:<volume (0.0 to 1.0)>:<line data>
-      
-      line data represente the checked input.
-      For the moment we will represent it by 0 and 1 line.
-      ex : 00100100100100 ..
-      
-     */
     
     var setConfig = function(conf) {
-      /*
-      conf.nbCut
-      conf.bpm
-      conf.tracks
-      conf.tracks[i].{letter,volume,data}
-      */
       console.log(conf);
     };
     var getConfig = function() {
-      return {
-        nbCut: 16,
-        bpm: 80,
-        tracks: [
-          {letter:65, volume: 0.5, data: "0010010010010010"},
-          {letter:66, volume: 0.75, data: "0010010010010010"},
-          {letter:67, volume: 1.0, data: "0010010010010010"}
-        ]
+      var tracks = [];
+      $('#drumbox .tracks .track').each(function(){
+        var letter = $(this).attr('rel');
+        if(letter) {
+          var audio = $('audio', this)[0];
+          var data = [];
+          $('.check input').each(function(){
+            data.push($(this).is(':checked'));
+          });
+          tracks.push({letter: letter, volume: audio.volume, data: data});
+        }
+      });
+      var conf = {
+        nbCut: g_trackLoopCut,
+        bpm: g_trackBpm,
+        tracks: tracks
       };
+      return conf;
+    };
+    
+    var decodeTrackLineData = function(str, len) {
+      var n = decodeInt(str);
+      var array = [];
+      for(var i=0; i<len; ++i) {
+        array.push(n&1?true:false);
+        n=n>>1;
+      }
+      return array.reverse();
+    };
+    
+    var encodeTrackLineData = function(arrayOfBoolean) {
+      var n = 0;
+      for(var i=0; i<arrayOfBoolean.length; ++i) {
+        n=n<<1;
+        n|=(arrayOfBoolean[i] ? 1 : 0);
+      }
+      return encodeInt(n);
+    };
+    
+    var encodeInt = function(int) {
+      return String.fromCharCode(int);
+    };
+    var decodeInt = function(str) {
+      return str.charCodeAt(0);
     };
     
     /**
@@ -350,10 +381,10 @@
      */
     var export = function() {
       var conf = getConfig();
-      var str = conf.nbCut+"\n"+conf.bpm;
+      var str = encodeInt(conf.nbCut)+"\n"+encodeInt(conf.bpm);
       for(var l in conf.tracks) {
         var track = conf.tracks[l];
-        str+=("\n"+track.letter+":"+track.volume+":"+track.data);
+        str+=("\n"+encodeInt(track.letter)+":"+encodeInt(Math.floor(track.volume*100.0))+":"+encodeTrackLineData(track.data));
       }
       return Base64.encode(str);
     };
@@ -361,10 +392,10 @@
       var conf = {tracks: []};
       var str = Base64.decode(str_base64);
       var spl = str.split('\n');
-      if(spl.length<3)
+      if(spl.length<2)
         return -1;
-      var nbCut = conf.nbCut = parseInt(spl[0]);
-      var bpm = conf.bpm = parseInt(spl[1]);
+      var nbCut = conf.nbCut = decodeInt(spl[0]);
+      var bpm = conf.bpm = decodeInt(spl[1]);
       if(!nbCut || !bpm || bpm<0 || nbCut<0)
         return -2;
       for(var l=2; l<spl.length; ++l) {
@@ -373,9 +404,9 @@
         var lineSpl = line.split(':');
         if(lineSpl.length!=3)
           return -3;
-        var letter = confTrack.letter = parseInt(lineSpl[0]);
-        var volume = confTrack.volume = parseFloat(lineSpl[1]);
-        confTrack.data = lineSpl[2];
+        var letter = confTrack.letter = decodeInt(lineSpl[0]);
+        var volume = confTrack.volume = decodeInt(lineSpl[1])/100.0;
+        confTrack.data = decodeTrackLineData(lineSpl[2], nbCut);
         if(!letter || letter<0 || isNaN(volume) || volume<0.0 || volume>1.0)
           return -4;
         conf.tracks.push(confTrack);
