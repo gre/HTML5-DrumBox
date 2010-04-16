@@ -4,7 +4,63 @@
   
   var g_sounds = {};
   
+  var g_trackLoopCut = null;
+  var g_trackBpm = null;
+  
   var Main = function() {
+    
+    var tpl_check = function(checked) {
+      return '<td class="check"><input type="checkbox"'+(!checked?'':'checked="checked"')+'/></td>';
+    };
+    var tpl_soundLabel = function(sound) {
+      return '<td class="soundLabel">'+
+      (sound?
+      ('<audio src="'+sound.uri+'"></audio>'+
+      '<span>'+sound.name+'</span>'):
+      ('<button class="setTrackLetter">Definir le son</button>'))+
+      '</td>';
+    };
+    
+    var tpl_track = function(sound) {
+      var html = "";
+      for(var i=0; i<g_trackLoopCut; ++i)
+        html += tpl_check();
+      return '<tr class="track">'+
+      tpl_soundLabel(sound)+
+      html+
+      '</tr>';
+    };
+    
+    var addTrack = function(letter) {
+      var sound = letter ? g_sounds[letter] : null;
+      var tpl = tpl_track(sound);
+      $('#drumbox .tracks').append(tpl);
+    };
+    
+    var setTrackLetter = function(track, letter) {
+      $(track).replaceWith(tpl_track(g_sounds[letter]));
+    };
+    
+    var updateTrackLoopCut = function() {
+      var val = g_trackLoopCut = parseInt($('#cutNumber :selected').val());
+      $('#drumbox .track').each(function(){
+        var checks = $('.check',this);
+        var overflow = checks.length - val;
+        if(overflow<0) {
+          while(overflow!==0) {
+            $(this).append(tpl_check());
+            ++overflow;
+          }
+        }
+        else if(overflow>0) {
+          $(checks.splice(val)).remove();
+        }
+      });
+    };
+    
+    var updateTrackBpm = function() {
+      g_trackBpm = parseInt($('#BpmCutLoop :selected').val());
+    };
     
     return {
       init: function() {
@@ -14,6 +70,21 @@
           $('audio.letsMix')[0].play();
           isStarted = true;
         });
+        
+        updateTrackLoopCut();
+        $('#cutNumber').change(updateTrackLoopCut);
+        
+        updateTrackBpm();
+        $('#BpmCutLoop').change(updateTrackBpm);
+        
+        $('#drumbox .addTrack').click(function() {
+          addTrack();
+        });
+        
+        $('#drumbox .track .setTrackLetter').live('click', function() {
+          //setTrackLetter($(this).parents().filter('.track'), num);
+        });
+        
       }
     }
   }();
@@ -54,16 +125,19 @@
      * uri : audio resource
      * letter : int code of the letter to bind
      */
-    var addSound = function(uri, letter) {
+    var addSound = function(uri, letter, cat) {
       var node = $('<audio src="'+uri+'"></audio>');
       $('#preLoader').append(node);
       if(!g_sounds[letter]) g_sounds[letter] = {};
       g_sounds[letter].node = node;
+      g_sounds[letter].uri = uri;
+      g_sounds[letter].cat = cat;
+      g_sounds[letter].name = cat+'_'+letter;
     };
     
     var addAllSounds = function(sounds) {
       for(var a in sounds)
-        addSound(sounds[a], a);
+        addSound(sounds[a][0], a, sounds[a][1]);
     };
     
     var bindAll = function() {
@@ -88,38 +162,38 @@
         // wxcvbn : [87, 88, 67, 86, 66, 78]
         
         addAllSounds({
-          65: "sounds/kick/Kick11.wav",
-          90: "sounds/kick/Kick46.wav",
-          81: "sounds/kick/Kick38.wav",
-          83: "sounds/kick/Kick29.wav",
-          87: "sounds/kick/Kick14.wav",
-          88: "sounds/kick/Kick15.wav",
+          65: ["sounds/kick/Kick11.wav", 'kick'],
+          90: ["sounds/kick/Kick46.wav", 'kick'],
+          81: ["sounds/kick/Kick38.wav", 'kick'],
+          83: ["sounds/kick/Kick29.wav", 'kick'],
+          87: ["sounds/kick/Kick14.wav", 'kick'],
+          88: ["sounds/kick/Kick15.wav", 'kick'],
           
-          69: "sounds/snare/Snare30.wav",
-          82: "sounds/snare/Snare.wav",
-          68: "sounds/snare/Snare79.wav",
-          70: "sounds/snare/Snare23.wav",
-          67: "sounds/snare/Snare63.wav",
-          86: "sounds/snare/Snare35.wav",
+          69: ["sounds/snare/Snare30.wav", 'snare'],
+          82: ["sounds/snare/Snare.wav", 'snare'],
+          68: ["sounds/snare/Snare79.wav", 'snare'],
+          70: ["sounds/snare/Snare23.wav", 'snare'],
+          67: ["sounds/snare/Snare63.wav", 'snare'],
+          86: ["sounds/snare/Snare35.wav", 'snare'],
           
-          84: "sounds/clap/Clap8.wav",
-          89: "sounds/clap/Clap16.wav",
-          71: "sounds/clap/Clap6.wav",
-          72: "sounds/clap/Clap21.wav",
+          84: ["sounds/clap/Clap8.wav", 'clap'],
+          89: ["sounds/clap/Clap16.wav", 'clap'],
+          71: ["sounds/clap/Clap6.wav", 'clap'],
+          72: ["sounds/clap/Clap21.wav", 'clap'],
           
-          66: "sounds/hithat/HithatC24.wav",
-          78: "sounds/hithat/HithatO12.wav",
+          66: ["sounds/hithat/HithatC24.wav", 'hithat'],
+          78: ["sounds/hithat/HithatO12.wav", 'hithat'],
           
-          74: "sounds/fx/Fx10.wav",
-          75: "sounds/fx/Fx72.wav",
+          74: ["sounds/fx/Fx10.wav", 'fx'],
+          75: ["sounds/fx/Fx72.wav", 'fx'],
           
-          85: "sounds/cymbal/Cymbal14.wav",
-          73: "sounds/cymbal/Cymbal5.wav",
+          85: ["sounds/cymbal/Cymbal14.wav", 'cymbal'],
+          73: ["sounds/cymbal/Cymbal5.wav", 'cymbal'],
           
-          79: "sounds/vocal/give_me_the_beat.wav",
-          80: "sounds/vocal/go.wav",
-          76: "sounds/vocal/Vocal27.wav",
-          77: "sounds/vocal/wo.wav"
+          79: ["sounds/vocal/give_me_the_beat.wav", 'vocal'],
+          80: ["sounds/vocal/go.wav", 'vocal'],
+          76: ["sounds/vocal/Vocal27.wav", 'vocal'],
+          77: ["sounds/vocal/wo.wav", 'vocal']
         });
         bindAll();
       }

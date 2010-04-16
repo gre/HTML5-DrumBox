@@ -41,6 +41,10 @@ footer {
   
 }
 
+#drumbox .actions {
+  text-align: center;
+}
+
 #drumbox table.tracks {
   margin: 0 auto;
   padding: 2px;
