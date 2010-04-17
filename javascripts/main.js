@@ -38,7 +38,9 @@
   };
   
   var g_trackLoopCut = null;
-  var g_trackBpm = null;
+  var g_bpm = null;
+  var g_cursorNode = null;
+  var g_tracksNode = null;
   
   var Main = function() {
     
@@ -85,6 +87,9 @@
         value: 100,
         slide: function(event, ui) {
           $('audio',$(this).parents().filter('.track'))[0].volume = ui.value/100.0;
+        },
+        change: function(){
+          updateBookmark();
         }
       });
       return node;
@@ -92,7 +97,9 @@
     
     var addTrack = function(letter) {
       var sound = letter ? g_sounds[letter] : null;
-      $('#drumbox .tracks').append(bindTrack(tpl_track(letter)));
+      var node = bindTrack(tpl_track(letter));
+      g_tracksNode.append(node);
+      return node;
     };
     
     var setTrackLetter = function(track, letter) {
@@ -117,17 +124,85 @@
     };
     
     var updateTrackBpm = function() {
-      g_trackBpm = parseInt($('#BpmCutLoop :selected').val());
+      g_bpm = parseInt($('#BpmCutLoop :selected').val());
+    };
+    
+    var updateBookmark = function() {
+      var path = window.location.href.substring(0,window.location.href.length-window.location.search.length);
+      $('#bookmarkThis').val(path+'?mix='+Config.export());
+    };
+    
+    //// drumbox player
+    
+    var g_cycleInterval = null;
+    
+    var g_loopCutNumLast = -1;
+    var g_loopCutNum = 0;
+    var g_loopCutProgress = 0;
+    
+    var updateCursorPosition = function() {
+      var track = $('.track:first .check').eq(g_loopCutNum); // to improve
+      var baseLeft = track.offset().left+g_loopCutProgress*track.width();
+      var height = g_tracksNode.height();
+      var baseTop = g_tracksNode.offset().top;
+      g_cursorNode.height(height).css({
+        left: Math.floor(baseLeft)+'px',
+        top: Math.floor(baseTop)+'px'
+      });
+    };
+    
+    var playCurrentLoopCut = function() {
+      $('#drumbox .tracks .track').each(function() {
+        var isChecked = $('.check input', this).eq(g_loopCutNum).is(':checked');
+        if(isChecked) {
+          var audio = $('audio',this)[0];
+          if(audio) {
+            audio.pause();
+            audio.currentTime=0;
+            audio.play();
+          }
+        }
+      });
+    };
+    
+    var playDrumbox = function() {
+      if(g_cycleInterval) clearInterval(g_cycleInterval);
+      
+      var beginTime = new Date().getTime();
+      
+      var cycle = function() {
+        var now = new Date().getTime();
+        var bpm = g_bpm;
+        var nbLoopCut = g_trackLoopCut;
+        
+        var beatDuration = 60000 / bpm; //ms
+        
+        var loopDuration = Math.floor(nbLoopCut*beatDuration);
+        var relativeNow = now % loopDuration;
+        g_loopCutNum = Math.floor((nbLoopCut*relativeNow)/loopDuration);
+        g_loopCutProgress = (relativeNow-g_loopCutNum*beatDuration)/beatDuration;
+        updateCursorPosition();
+        
+        // loop cut changed
+        if(g_loopCutNumLast!=g_loopCutNum) {
+          playCurrentLoopCut();
+          g_loopCutNumLast = g_loopCutNum;
+        }
+      };
+      
+      g_cycleInterval = setInterval(cycle, 20);
+      
+    };
+    var pauseDrumbox = function() {
+      if(g_cycleInterval) clearInterval(g_cycleInterval);
     };
     
     return {
+      addTrack: addTrack,
       init: function() {
-        $('a.letsMix').click(function(){
-          $('.intro').hide();
-          $('#main').show();
-          $('audio.letsMix')[0].play();
-          isStarted = true;
-        });
+        g_cursorNode = $('#cursor');
+        g_tracksNode = $('#drumbox .tracks');
+        
         
         updateTrackLoopCut();
         $('#cutNumber').change(updateTrackLoopCut);
@@ -139,13 +214,44 @@
           addTrack();
         });
         
+        $('#drumbox .playDrumbox').click(playDrumbox);
+        $('#drumbox .pauseDrumbox').click(pauseDrumbox);
+        
         $('#drumbox .track .setTrackLetter').live('click', function() {
           var track = $(this).parents().filter('.track');
           $(this).removeClass('setTrackLetter').html("press&nbsp;key...");
           $(document).one('touchsound', function(e,data){
             setTrackLetter(track, data);
+            updateBookmark();
           });
         });
+        
+        $('#cutNumber, #BpmCutLoop, #drumbox .check input').live('change', updateBookmark);
+        updateBookmark();
+        $('#bookmarkThis').click(function(){
+          updateBookmark();
+          this.select();
+        });
+        
+        
+        var start = function(){
+          $('.intro').hide();
+          $('#main').show();
+          var audio = $('audio.letsMix')[0];
+          audio.volume = 0.5;
+          audio.play();
+          isStarted = true;
+        };
+        
+        var conf = null;
+        var indexOfMix = window.location.href.indexOf('mix=');
+        if(indexOfMix)
+          conf = window.location.href.substring(indexOfMix+4);
+        
+        if(conf && Config.import(conf)==0)
+          start();
+        else
+          $('a.letsMix').one('click', start);
         
       }
     }
@@ -218,10 +324,6 @@
     
     return {
       init: function() {
-        // azertyuiop : [65, 90, 69, 82, 84, 89, 85, 73, 79, 80]
-        // qsdfghjklm : [81, 83, 68, 70, 71, 72, 74, 75, 76, 77]
-        // wxcvbn : [87, 88, 67, 86, 66, 78]
-        
         bindAll();
       }
     }
@@ -338,10 +440,24 @@
     }
   };
   
-  var Config = CONFIG = function() {
+  var Config = function() {
     
     var setConfig = function(conf) {
-      console.log(conf);
+      var g_trackLoopCut = conf.nbCut;
+      var g_bpm = conf.bpm;
+      $('#cutNumber option[value='+conf.nbCut+']').attr('selected','selected');
+      $('#BpmCutLoop option[value='+conf.bpm+']').attr('selected','selected');
+      $('#drumbox .tracks').empty();
+      for(var t in conf.tracks) {
+        var track = conf.tracks[t];
+        var node = Main.addTrack(track.letter);
+        $('.slider', node).slider('value', Math.floor(100*track.volume));
+        $('audio', node)[0].volume = track.volume;
+        for(var d=0; d<track.data.length; ++d) {
+          if(track.data[d])
+            $('.check input',node).eq(d).attr('checked','checked');
+        }
+      }
     };
     var getConfig = function() {
       var tracks = [];
@@ -358,7 +474,7 @@
       });
       var conf = {
         nbCut: g_trackLoopCut,
-        bpm: g_trackBpm,
+        bpm: g_bpm,
         tracks: tracks
       };
       return conf;

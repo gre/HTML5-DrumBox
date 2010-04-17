@@ -11,6 +11,10 @@ body {
   padding: 0;
 }
 
+table td {
+  padding: 0;
+}
+
 a {
   color: #BFF;
   text-decoration: none;
@@ -35,6 +39,13 @@ footer {
 
 .error {
   color: red;
+}
+
+#cursor {
+  position: absolute;
+  width: 2px;
+  z-index: 10;
+  background: red;
 }
 
 #drumbox {
@@ -67,6 +78,10 @@ footer {
 }
 #drumbox .track td.check {
   width: 15px;
+}
+#drumbox .track .check input {
+  position: relative;
+  z-index: 20;
 }
 
 #drumbox .options {

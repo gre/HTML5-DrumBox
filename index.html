@@ -45,11 +45,18 @@
       <canvas id="visualizer" width="600" height="200"></canvas>
       
       <div id="drumbox">
-      
+        
+        <div id="cursor"></div>
         <table class="tracks"></table>
         
         <div class="actions">
           <button class="addTrack">Add track</button>
+          <button class="playDrumbox">Play</button>
+          <button class="pauseDrumbox">Pause</button>
+          <p>
+            <label for="bookmarkThis">Bookmark your mix : </span>
+            <input id="bookmarkThis" type="text" size="40" value="" readonly />
+          </p>
         </div>
         
         <div class="options">
@@ -58,12 +65,14 @@
             <option value="8">8</option>
             <option value="12">12</option>
             <option value="16" selected="selected">16</option>
+            <option value="20">20</option>
+            <option value="24">24</option>
           </select>
           <label for="BpmCutLoop">BPM of a cut loop</label>
           <select id="BpmCutLoop"></select>
           <script type="text/javascript">
             $(function(){
-              for(var i=80; i<=120; i+=10)
+              for(var i=100; i<=160; i+=10)
                 $('#BpmCutLoop').append('<option value="'+i+'">'+i+'</option>');
             }());
           </script>
