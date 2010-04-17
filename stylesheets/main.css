@@ -43,6 +43,8 @@ footer {
 
 #drumbox .actions {
   text-align: center;
+  background: rgba(255,255,255,0.1);
+  padding: 4px;
 }
 
 #drumbox table.tracks {
@@ -56,12 +58,15 @@ footer {
   width: 50px;
 }
 #drumbox .track td.soundLabel {
-  width: 100px;
   font-family: Monospace;
   font-size: 12px;
 }
-#drumbox .track td {
-  width: 20px;
+#drumbox .track td.soundVolume {
+  width: 40px;
+  padding: 0 15px;
+}
+#drumbox .track td.check {
+  width: 15px;
 }
 
 #drumbox .options {

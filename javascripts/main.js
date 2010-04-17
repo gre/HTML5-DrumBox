@@ -2,7 +2,40 @@
   
   var isStarted = false;
   
-  var g_sounds = {};
+  var g_sounds = {
+/* A */ 65: {uri:"sounds/kick/Kick11.wav", name:'kick_1', cat:'kick'},
+/* Z */ 90: {uri:"sounds/kick/Kick46.wav", name:'kick_2', cat:'kick'},
+/* Q */ 81: {uri:"sounds/kick/Kick38.wav", name:'kick_3', cat:'kick'},
+/* S */ 83: {uri:"sounds/kick/Kick29.wav", name:'kick_4', cat:'kick'},
+/* W */ 87: {uri:"sounds/kick/Kick14.wav", name:'kick_5', cat:'kick'},
+/* X */ 88: {uri:"sounds/kick/Kick15.wav", name:'kick_6', cat:'kick'},
+
+/* E */ 69: {uri:"sounds/snare/Snare30.wav", name:'snare_1', cat:'snare'},
+/* R */ 82: {uri:"sounds/snare/Snare.wav", name:'snare_2', cat:'snare'},
+/* D */ 68: {uri:"sounds/snare/Snare79.wav", name:'snare_3', cat:'snare'},
+/* F */ 70: {uri:"sounds/snare/Snare23.wav", name:'snare_4', cat:'snare'},
+/* C */ 67: {uri:"sounds/snare/Snare63.wav", name:'snare_5', cat:'snare'},
+/* V */ 86: {uri:"sounds/snare/Snare35.wav", name:'snare_6', cat:'snare'},
+
+/* T */ 84: {uri:"sounds/clap/Clap8.wav", name:'clap_1', cat:'clap'},
+/* Y */ 89: {uri:"sounds/clap/Clap16.wav", name:'clap_2', cat:'clap'},
+/* G */ 71: {uri:"sounds/clap/Clap6.wav", name:'clap_3', cat:'clap'},
+/* H */ 72: {uri:"sounds/clap/Clap21.wav", name:'clap_4', cat:'clap'},
+
+/* B */ 66: {uri:"sounds/hithat/HithatC24.wav", name:'hithat_1', cat:'hithat'},
+/* N */ 78: {uri:"sounds/hithat/HithatO12.wav", name:'hithat_2', cat:'hithat'},
+
+/* J */ 74: {uri:"sounds/fx/Fx10.wav", name:'fx_1', cat:'fx'},
+/* K */ 75: {uri:"sounds/fx/Fx72.wav", name:'fx_2', cat:'fx'},
+
+/* U */ 85: {uri:"sounds/cymbal/Cymbal14.wav", name:'cymbal_1', cat:'cymbal'},
+/* I */ 73: {uri:"sounds/cymbal/Cymbal5.wav", name:'cymbal_2', cat:'cymbal'},
+
+/* O */ 79: {uri:"sounds/vocal/give_me_the_beat.wav", name:'give_me', cat:'vocal'},
+/* P */ 80: {uri:"sounds/vocal/go.wav", name:'go', cat:'vocal'},
+/* L */ 76: {uri:"sounds/vocal/Vocal27.wav", name:'shout_amb', cat:'vocal'},
+/* M */ 77: {uri:"sounds/vocal/wo.wav", name:'wo', cat:'vocal'}
+  };
   
   var g_trackLoopCut = null;
   var g_trackBpm = null;
@@ -24,6 +57,12 @@
       '<span>'+sound.name+'</span>'+
       '</td>';
     };
+    var tpl_soundVolume = function(sound) {
+      if(!sound) return '<td class="soundVolume"></td>';
+      return ('<td class="soundVolume">'+
+      '<div class="slider"></div>'+
+      '</td>');
+    };
     
     var tpl_track = function(letter) {
       var sound = g_sounds[letter];
@@ -33,18 +72,31 @@
       return '<tr class="track" rel="'+(letter||"")+'">'+
       tpl_switcher(sound)+
       tpl_soundLabel(sound)+
+      tpl_soundVolume(sound)+
       html+
       '</tr>';
     };
     
+    var bindTrack = function(node) {
+      node = $(node);
+      $('.soundVolume .slider',node).slider({
+        min: 0, 
+        max: 100, 
+        value: 100,
+        slide: function(event, ui) {
+          $('audio',$(this).parents().filter('.track'))[0].volume = ui.value/100.0;
+        }
+      });
+      return node;
+    };
+    
     var addTrack = function(letter) {
       var sound = letter ? g_sounds[letter] : null;
-      var tpl = tpl_track(letter);
-      $('#drumbox .tracks').append(tpl);
+      $('#drumbox .tracks').append(bindTrack(tpl_track(letter)));
     };
     
     var setTrackLetter = function(track, letter) {
-      $(track).replaceWith(tpl_track(letter));
+      $(track).replaceWith(bindTrack(tpl_track(letter)));
     };
     
     var updateTrackLoopCut = function() {
@@ -103,17 +155,20 @@
   var Visualizer = function() {
     var g_node = null;
     var g_ctx = null;
+    var c_width, c_height;
     
     var effect = {
       woo: function() {
         g_ctx.fillStyle = '#FFF';
-        g_ctx.fillText('Woo!', 100+Math.rand()*100, 100+Math.rand()*100);
+        g_ctx.fillText('Woo!', Math.random()*c_width, Math.random()*c_height);
       }
       
     };
     
     return {
       sound: function(key) {
+        c_width = g_node.width();
+        c_height = g_node.height();
         switch(key) {
           case 77: effect.woo(); break;
           
@@ -121,9 +176,18 @@
       },
       init: function() {
         g_node = $('#visualizer');
+        
+        c_width = g_node.width();
+        c_height = g_node.height();
         g_ctx = g_node[0].getContext('2d');
         g_ctx.fillStyle = 'black';
-        g_ctx.fillRect(0,0,g_node.width(),g_node.height());
+        g_ctx.fillRect(0,0,c_width,c_height);
+        setInterval(function(){
+          g_ctx.fillStyle = 'black';
+          g_ctx.globalAlpha = 0.1;
+          g_ctx.fillRect(0,0,c_width,c_height);
+          g_ctx.globalAlpha = 1;
+        }, 100);
       }
     }
   }();
@@ -131,27 +195,12 @@
   
   var Sounds = function() {
     
-    /**
-     * uri : audio resource
-     * letter : int code of the letter to bind
-     */
-    var addSound = function(uri, letter, cat) {
-      var node = $('<audio src="'+uri+'"></audio>');
-      $('#preLoader').append(node);
-      if(!g_sounds[letter]) g_sounds[letter] = {};
-      g_sounds[letter].node = node;
-      g_sounds[letter].uri = uri;
-      g_sounds[letter].cat = cat;
-      g_sounds[letter].name = cat+'_'+letter;
-    };
-    
-    var addAllSounds = function(sounds) {
-      for(var a in sounds)
-        addSound(sounds[a][0], a, sounds[a][1]);
-    };
-    
     var bindAll = function() {
-      
+      for(var a in g_sounds) {
+        var node = $('<audio src="'+g_sounds[a].uri+'"></audio>');
+        $('#preLoader').append(node);
+        g_sounds[a].node = node;
+      }
       $(window).keydown(function(e) {
         var sound = g_sounds[e.keyCode];
         if(isStarted && sound) {
@@ -173,41 +222,6 @@
         // qsdfghjklm : [81, 83, 68, 70, 71, 72, 74, 75, 76, 77]
         // wxcvbn : [87, 88, 67, 86, 66, 78]
         
-        // refactor that : g_sounds will be init by a simple affectation. only others things are made here, like node...
-        addAllSounds({
-          65: ["sounds/kick/Kick11.wav", 'kick'],
-          90: ["sounds/kick/Kick46.wav", 'kick'],
-          81: ["sounds/kick/Kick38.wav", 'kick'],
-          83: ["sounds/kick/Kick29.wav", 'kick'],
-          87: ["sounds/kick/Kick14.wav", 'kick'],
-          88: ["sounds/kick/Kick15.wav", 'kick'],
-          
-          69: ["sounds/snare/Snare30.wav", 'snare'],
-          82: ["sounds/snare/Snare.wav", 'snare'],
-          68: ["sounds/snare/Snare79.wav", 'snare'],
-          70: ["sounds/snare/Snare23.wav", 'snare'],
-          67: ["sounds/snare/Snare63.wav", 'snare'],
-          86: ["sounds/snare/Snare35.wav", 'snare'],
-          
-          84: ["sounds/clap/Clap8.wav", 'clap'],
-          89: ["sounds/clap/Clap16.wav", 'clap'],
-          71: ["sounds/clap/Clap6.wav", 'clap'],
-          72: ["sounds/clap/Clap21.wav", 'clap'],
-          
-          66: ["sounds/hithat/HithatC24.wav", 'hithat'],
-          78: ["sounds/hithat/HithatO12.wav", 'hithat'],
-          
-          74: ["sounds/fx/Fx10.wav", 'fx'],
-          75: ["sounds/fx/Fx72.wav", 'fx'],
-          
-          85: ["sounds/cymbal/Cymbal14.wav", 'cymbal'],
-          73: ["sounds/cymbal/Cymbal5.wav", 'cymbal'],
-          
-          79: ["sounds/vocal/give_me_the_beat.wav", 'vocal'],
-          80: ["sounds/vocal/go.wav", 'vocal'],
-          76: ["sounds/vocal/Vocal27.wav", 'vocal'],
-          77: ["sounds/vocal/wo.wav", 'vocal']
-        });
         bindAll();
       }
     }
@@ -369,11 +383,18 @@
       return encodeInt(n);
     };
     
+    // int must be a integer between 0 and 2^31-1. negative int are not supported.
     var encodeInt = function(int) {
+      var pow2_16_minus1 = 65535;
+      if(int>pow2_16_minus1)
+        return String.fromCharCode((int>>16)&pow2_16_minus1)+String.fromCharCode(int&pow2_16_minus1);
       return String.fromCharCode(int);
     };
+    
     var decodeInt = function(str) {
-      return str.charCodeAt(0);
+      if(str.length==1)
+        return str.charCodeAt(0);
+      return str.charCodeAt(0)<<16+str.charCodeAt(1);
     };
     
     /**
@@ -381,10 +402,10 @@
      */
     var export = function() {
       var conf = getConfig();
-      var str = encodeInt(conf.nbCut)+"\n"+encodeInt(conf.bpm);
+      var str = encodeInt(conf.nbCut)+encodeInt(conf.bpm);
       for(var l in conf.tracks) {
         var track = conf.tracks[l];
-        str+=("\n"+encodeInt(track.letter)+":"+encodeInt(Math.floor(track.volume*100.0))+":"+encodeTrackLineData(track.data));
+        str+=("\n"+encodeInt(track.letter)+encodeInt(Math.floor(track.volume*100.0))+encodeTrackLineData(track.data));
       }
       return Base64.encode(str);
     };
@@ -392,21 +413,18 @@
       var conf = {tracks: []};
       var str = Base64.decode(str_base64);
       var spl = str.split('\n');
-      if(spl.length<2)
-        return -1;
-      var nbCut = conf.nbCut = decodeInt(spl[0]);
-      var bpm = conf.bpm = decodeInt(spl[1]);
+      var nbCut = conf.nbCut = decodeInt(spl[0][0]);
+      var bpm = conf.bpm = decodeInt(spl[0][1]);
       if(!nbCut || !bpm || bpm<0 || nbCut<0)
         return -2;
-      for(var l=2; l<spl.length; ++l) {
+      for(var l=1; l<spl.length; ++l) {
         var confTrack = {};
         var line = spl[l];
-        var lineSpl = line.split(':');
-        if(lineSpl.length!=3)
+        if(line.length!=3)
           return -3;
-        var letter = confTrack.letter = decodeInt(lineSpl[0]);
-        var volume = confTrack.volume = decodeInt(lineSpl[1])/100.0;
-        confTrack.data = decodeTrackLineData(lineSpl[2], nbCut);
+        var letter = confTrack.letter = decodeInt(line[0]);
+        var volume = confTrack.volume = decodeInt(line[1])/100.0;
+        confTrack.data = decodeTrackLineData(line.substring(2), nbCut);
         if(!letter || letter<0 || isNaN(volume) || volume<0.0 || volume>1.0)
           return -4;
         conf.tracks.push(confTrack);
